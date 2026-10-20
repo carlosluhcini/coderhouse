@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Borrador de notebook; la entrega es el proyecto de Python.
+Orquestador_concurrente.ipynb
