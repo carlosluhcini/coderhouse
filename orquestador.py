@@ -114,20 +114,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    import argparse
-    import math
-
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--real", action="store_true", help="Consultar OpenRouter y Gemini")
-    parser.add_argument("--timeout", type=float, default=2, help="Límite global en segundos (predeterminado: 2)")
-    parser.add_argument("--prompt", default="Respondé en español con un saludo de una oración.")
-    args = parser.parse_args()
-    if not math.isfinite(args.timeout) or args.timeout <= 0:
-        parser.error("--timeout debe ser un número finito mayor que cero")
-    if args.real:
-        try:
-            from proveedores import consultar_reales
-        except ModuleNotFoundError:
-            parser.exit(1, "Instalá las dependencias: python -m pip install -r requirements-real.txt\n")
-        sys.exit(asyncio.run(consultar_reales(args.prompt, args.timeout)))
     asyncio.run(main())

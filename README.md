@@ -1,108 +1,80 @@
-# Orquestador concurrente de modelos
+# Primera entrega: Orquestador concurrente de modelos
 
-Proyecto de Python que simula un backend de consultas a modelos de IA. El modo predeterminado no requiere claves de API ni dependencias externas. Opcionalmente permite consultar OpenRouter y Gemini con claves propias.
+**Autor:** Carlos Luchini  
+**Curso:** Coderhouse
+
+Simulación en Python de un backend que consulta tres modelos de IA de forma concurrente, maneja un tiempo límite global y limita la cantidad de llamadas simultáneas.
 
 ## Requisitos
 
-Python 3.12 o posterior.
+- Python 3.12 o posterior (verificado con Python 3.12.14).
+- Solo se utiliza la biblioteca estándar de Python.
+- No requiere claves de API, cuentas externas ni instalación de dependencias.
 
 ## Ejecutar en Windows
 
-Desde esta carpeta, crear el entorno y ejecutar en PowerShell:
+Abrir PowerShell en la carpeta del proyecto y ejecutar:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe orquestador.py
 ```
 
-Verificado con Python 3.12.14. El entorno `.venv` se crea localmente y no se incluye en Git.
+Si el entorno ya existe, ejecutar solamente la segunda línea.
 
-En macOS o Linux:
+## Ejecutar en macOS o Linux
 
 ```sh
 python3 -m venv .venv
 .venv/bin/python orquestador.py
 ```
 
-## Archivos del proyecto
-
-- `orquestador.py`: corrutinas, orquestación y tres demostraciones ejecutables.
-- `pyproject.toml`: información del proyecto y versión requerida de Python.
-- `.gitignore`: excluye el entorno local y archivos temporales del control de versiones.
-
-## Funcionamiento
-
-1. **Concurrencia:** `gpt_4_call`, `claude_3_call` y `local_llama_call` esperan 0,3, 0,5 y 0,7 segundos usando `await asyncio.sleep()`. `asyncio.gather()` las programa juntas. Los logs muestran sus inicios prácticamente en el mismo instante.
-2. **Resiliencia:** una segunda consulta hace que Llama intente tardar 3 segundos. `asyncio.timeout(2)` limita el grupo completo, cancela la llamada pendiente y genera `TimeoutError`. El error se captura fuera del contexto y el programa continúa. No se devuelven resultados parciales en esta demostración.
-3. **Control de flujo:** se programan diez simulaciones y `asyncio.Semaphore(2)` permite ejecutar solo dos a la vez. Cada simulación espera 0,25 segundos. Las cinco tandas completan aproximadamente en 1,25 segundos, con un límite global de 2 segundos.
-
-El registro incluye el tiempo transcurrido, el inicio y fin de cada llamada y el contador de tareas activas. El script comprueba mediante aserciones que obtiene tres respuestas en la primera prueba, que maneja el tiempo límite en la segunda y que completa diez simulaciones con un máximo de dos simultáneas en la tercera.
-
-## Resultado esperado
-
-La ejecución completa demora unos 4 segundos. Debe mostrar un error de tiempo límite durante la segunda prueba y luego continuar hasta:
+## Archivos de la entrega
 
 ```text
+README.md          Instrucciones y explicación del ejercicio
+orquestador.py     Implementación y demostraciones ejecutables
+pyproject.toml     Datos del proyecto y versión requerida de Python
+.gitignore         Exclusión del entorno virtual y archivos locales
+```
+
+## Desarrollo de la consigna
+
+| Paso | Implementación |
+| --- | --- |
+| 1. Python 3.12+ | Entorno virtual y requisito declarado en `pyproject.toml`. |
+| 2. Tres corrutinas | `gpt_4_call`, `claude_3_call` y `local_llama_call`, cada una con `await asyncio.sleep()` y una latencia diferente: 0,3, 0,5 y 0,7 segundos. |
+| 3. Orquestación | `main()` ejecuta las demostraciones y `consultar_modelos()` programa las tres consultas con `asyncio.gather()`. |
+| 4. Resiliencia | `asyncio.timeout(2)` limita el grupo completo de llamadas. `except TimeoutError` muestra el error y permite continuar. |
+| 5. Control de flujo | `probar_semaforo()` programa diez simulaciones con `asyncio.gather()` y `asyncio.Semaphore(2)` admite como máximo dos simultáneamente. |
+
+## Pruebas y resultados esperados
+
+El programa ejecuta tres demostraciones consecutivas:
+
+1. **Concurrencia:** los tres modelos muestran INICIO prácticamente en el mismo instante. El grupo termina en aproximadamente 0,7 segundos, en lugar de sumar las tres esperas.
+2. **Tiempo límite:** Llama intenta demorar 3 segundos. A los 2 segundos del inicio de ese grupo se cancela la llamada pendiente, se captura `TimeoutError` y se muestra un mensaje de error. Luego el programa continúa con la tercera demostración.
+3. **Semáforo:** se programan diez llamadas con esperas de 0,25 segundos. Se completan en cinco tandas, en aproximadamente 1,25 segundos. Los logs muestran las tareas activas y el máximo observado es 2.
+
+Ejemplo abreviado de salida:
+
+```text
+[ 0.00 s] INICIO GPT-4
+[ 0.00 s] INICIO Claude 3
+[ 0.00 s] INICIO Llama local
+...
+ERROR: se superó el límite total de 2 segundos.
+El programa sigue funcionando después del error.
+...
 Completadas: 10 | máximo simultáneo: 2
 Programa finalizado.
 ```
 
-Los tiempos pueden variar ligeramente según el equipo. Todas las esperas son asíncronas.
+Los tiempos son aproximados. Cada grupo tiene un límite global de 2 segundos, incluyendo la espera del semáforo. La ejecución completa dura alrededor de 4 segundos porque las tres demostraciones se ejecutan una después de otra.
 
-El tiempo límite de 2 segundos se aplica a cada ejecución del grupo de llamadas, incluyendo la espera por el semáforo. El programa completo dura más porque ejecuta tres demostraciones consecutivas, cada una con su propio límite.
+## Criterios de aceptación
 
-## Cumplimiento de la consigna
-
-| Requisito | Implementación |
-| --- | --- |
-| Python 3.12+ | Entorno verificado con Python 3.12.14 y requisito en `pyproject.toml`. |
-| Tres corrutinas con diferentes latencias | `gpt_4_call`, `claude_3_call` y `local_llama_call` usan cada una `await asyncio.sleep()`. |
-| Consultas simultáneas | `consultar_modelos` usa `asyncio.gather()`. |
-| Límite global de 2 segundos | `asyncio.timeout(2)` abarca el grupo completo. |
-| Manejo del error y continuidad | `except TimeoutError` muestra un mensaje; luego se ejecuta la prueba del semáforo. |
-| Diez llamadas con máximo dos activas | `probar_semaforo` usa `asyncio.Semaphore(2)` y registra el máximo observado. |
-| Sin esperas bloqueantes | Las esperas simuladas usan exclusivamente `asyncio.sleep()`. |
-| Inicio casi simultáneo visible | Los logs incluyen marcas de tiempo desde el inicio. |
-
-## Pruebas opcionales con APIs reales
-
-Instalar las dependencias adicionales:
-
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements-real.txt
-```
-
-Copiar `.env.example` como `.env` si todavía no existe y completar las claves en ese archivo local:
-
-```dotenv
-OPENROUTER_API_KEY=tu_clave_de_openrouter
-GEMINI_API_KEY=tu_clave_de_gemini
-OPENROUTER_MODEL=openrouter/free
-GEMINI_MODEL=gemini-3.8-flash
-```
-
-`.env` está excluido de Git; `.env.example` contiene solamente nombres de variables y modelos. Las variables de entorno del sistema tienen prioridad sobre `.env`.
-
-Ejecutar una consulta a cada proveedor en paralelo:
-
-```powershell
-.\.venv\Scripts\python.exe orquestador.py --real
-```
-
-El límite global predeterminado sigue siendo de 2 segundos. Para dar más tiempo a los proveedores durante una prueba manual:
-
-```powershell
-.\.venv\Scripts\python.exe orquestador.py --real --timeout 30 --prompt "Explicá asyncio en una oración."
-```
-
-El modo real usa un semáforo de dos permisos y consultas HTTP asíncronas. Realiza dos consultas, una por proveedor; las tres corrutinas y las diez simulaciones exigidas por el ejercicio se ejecutan en el modo predeterminado. Si un proveedor falla, se muestra el motivo general y el otro puede terminar. El límite global cancela las consultas pendientes. El modo real devuelve un código de salida 1 cuando hay errores, sin mostrar trazas ni claves.
-
-OpenRouter usa por defecto su [router de modelos gratuitos](https://openrouter.ai/collections/free-models). Gemini usa el modelo del [ejemplo oficial de inicio](https://ai.google.dev/gemini-api/docs/generate-content/get-started). Se pueden cambiar los modelos en `.env`; su disponibilidad, cuotas y facturación dependen de cada cuenta. La prueba real envía el prompt a ambos servicios.
-
-## Verificación sin consumir API
-
-```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
-```
-
-Las pruebas de las integraciones usan respuestas HTTP simuladas y no necesitan claves reales.
+- Las esperas usan `await asyncio.sleep()`; no se usa `time.sleep()`.
+- Los logs incluyen marcas de tiempo que permiten comprobar el inicio concurrente.
+- `TimeoutError` se captura fuera de `asyncio.timeout()` y no interrumpe las demostraciones siguientes.
+- Las comprobaciones del programa verifican tres respuestas, el caso de tiempo límite y diez resultados con un máximo de dos llamadas simultáneas.
