@@ -12,27 +12,37 @@ def log(mensaje):
     print(f"[{perf_counter() - INICIO:5.2f} s] {mensaje}", flush=True)
 
 
-async def simular_modelo(nombre, demora):
-    log(f"INICIO {nombre}")
+async def gpt_4_call(demora=0.3):
+    log("INICIO GPT-4")
     try:
         await asyncio.sleep(demora)
-        log(f"FIN {nombre}")
-        return f"Respuesta simulada de {nombre}"
+        log("FIN GPT-4")
+        return "Respuesta simulada de GPT-4"
     except asyncio.CancelledError:
-        log(f"CANCELADA {nombre}")
+        log("CANCELADA GPT-4")
         raise  # Permite que asyncio.timeout complete la cancelación.
 
 
-async def gpt_4_call(demora=0.3):
-    return await simular_modelo("GPT-4", demora)
-
-
 async def claude_3_call(demora=0.5):
-    return await simular_modelo("Claude 3", demora)
+    log("INICIO Claude 3")
+    try:
+        await asyncio.sleep(demora)
+        log("FIN Claude 3")
+        return "Respuesta simulada de Claude 3"
+    except asyncio.CancelledError:
+        log("CANCELADA Claude 3")
+        raise
 
 
 async def local_llama_call(demora=0.7):
-    return await simular_modelo("Llama local", demora)
+    log("INICIO Llama local")
+    try:
+        await asyncio.sleep(demora)
+        log("FIN Llama local")
+        return "Respuesta simulada de Llama local"
+    except asyncio.CancelledError:
+        log("CANCELADA Llama local")
+        raise
 
 
 async def consultar_modelos(demora_llama=0.7):
@@ -91,7 +101,8 @@ async def main():
     assert resultados is not None and len(resultados) == 3
 
     log("PRUEBA 2: Llama demora 3 segundos; debe ocurrir TimeoutError.")
-    assert await consultar_modelos(demora_llama=3) is None
+    resultado_timeout = await consultar_modelos(demora_llama=3)
+    assert resultado_timeout is None
 
     log("El programa sigue funcionando después del error.")
     log("PRUEBA 3: diez llamadas con un máximo de dos simultáneas.")
@@ -103,4 +114,20 @@ async def main():
 
 
 if __name__ == "__main__":
+    import argparse
+    import math
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--real", action="store_true", help="Consultar OpenRouter y Gemini")
+    parser.add_argument("--timeout", type=float, default=2, help="Límite global en segundos (predeterminado: 2)")
+    parser.add_argument("--prompt", default="Respondé en español con un saludo de una oración.")
+    args = parser.parse_args()
+    if not math.isfinite(args.timeout) or args.timeout <= 0:
+        parser.error("--timeout debe ser un número finito mayor que cero")
+    if args.real:
+        try:
+            from proveedores import consultar_reales
+        except ModuleNotFoundError:
+            parser.exit(1, "Instalá las dependencias: python -m pip install -r requirements-real.txt\n")
+        sys.exit(asyncio.run(consultar_reales(args.prompt, args.timeout)))
     asyncio.run(main())

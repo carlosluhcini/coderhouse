@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.env
+.env.*
+!.env.example
 
 # Borrador de notebook; la entrega es el proyecto de Python.
 Orquestador_concurrente.ipynb
