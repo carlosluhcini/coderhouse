@@ -1,16 +1,19 @@
 # Primera entrega: Orquestador concurrente de modelos
 
-En este ejercicio, simularás la lógica de un backend que debe consultar múltiples fuentes de IA de forma eficiente.
+## Objetivo
 
-Pasos:
+Simular la lógica de un backend que consulta múltiples fuentes de IA de forma concurrente y eficiente.
 
-Configuración Inicial: Crea un entorno con Python 3.12+.
-Simulación de Llamadas: Define tres corrutinas async def que simulen llamadas a diferentes modelos (por ejemplo, gpt_4_call, claude_3_call, local_llama_call). Cada una debe usar await asyncio.sleep() con diferentes tiempos de espera para simular latencia de red.
-Orquestación: Implementa una función principal que dispare las tres llamadas simultáneamente usando asyncio.gather.
-Resiliencia: Añade un asyncio.timeout de 2 segundos a la ejecución total. Si alguna llamada tarda más, el programa debe capturar la excepción y mostrar un mensaje de error sin detenerse.
-Control de Flujo: Utiliza un asyncio.Semaphore para asegurar que, aunque intentes disparar 10 simulaciones de llamadas, solo 2 se ejecuten al mismo tiempo.
-Criterios de Aceptación:
+## Pasos
 
-El código no debe usar time.sleep (bloqueante).
-Se debe observar en los logs que las tareas inician casi al mismo tiempo.
-Se debe manejar correctamente la excepción TimeoutError.
+1. **Configuración inicial:** crear un entorno con Python 3.12 o posterior.
+2. **Simulación de llamadas:** definir tres corrutinas `async def` que simulen llamadas a diferentes modelos: `gpt_4_call`, `claude_3_call` y `local_llama_call`. Cada una debe usar `await asyncio.sleep()` con diferentes tiempos de espera para simular latencia de red.
+3. **Orquestación:** implementar una función principal que ejecute las tres llamadas simultáneamente mediante `asyncio.gather()`.
+4. **Resiliencia:** aplicar un límite global de 2 segundos mediante `asyncio.timeout()`. Si se supera, capturar la excepción y mostrar un mensaje de error sin interrumpir el programa.
+5. **Control de flujo:** utilizar `asyncio.Semaphore(2)` para que, al programar 10 simulaciones de llamadas, solo 2 se ejecuten al mismo tiempo.
+
+## Criterios de aceptación
+
+- No utilizar `time.sleep()`, ya que bloquea la ejecución.
+- Mostrar en los logs que las tareas comienzan casi al mismo tiempo.
+- Manejar correctamente la excepción `TimeoutError`.
